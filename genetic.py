@@ -54,7 +54,7 @@ def leerArchivo():
     lineas = archivo.readlines()
     for linea in lineas:
         splitLinea = linea.split(',')
-        itemTuple = (float(splitLinea[0]), float(splitLinea[1].strip()))
+        itemTuple = (float(splitLinea[0].strip()), float(splitLinea[1].strip()))
         datos.extend([itemTuple])
     return datos
 
@@ -119,6 +119,33 @@ def mostrar(coeficientes):
 
     print("{0}\t{1}\t{2}".format(polinomio, fitness, str(timeDiff)))
 
+def generarPoblacionInicial():
+    p = []
+    for i in range(poblacionMax):
+        p.append(generar_padre(gradoMax))
+    return p
+
+def fitnessCriteria(e):
+    return obtener_fitness(e)
+
+def imprimirPoblacion(datos):
+    print("------------------------")
+    for p in datos:
+        print("{0}\t\t fitness: {1}".format(p, obtener_fitness(p)))
+    print("------------------------")
+
+def getPromedio(num1, num2):
+    return (num1 + num2) / 2
+
+def getExtremos(datos, indice):
+    menor = datos[0][indice]
+    mayor = datos[0][indice]
+    for dato in datos:
+        if dato[indice] < menor:
+            menor = dato[indice]
+        if dato[indice] > mayor:
+            mayor = dato[indice]
+    return (menor, mayor)
 
 # Datos iniciales
 random.seed()
@@ -127,28 +154,105 @@ promedioY = obtenerPromedioY(targetData)    # promedio para sacar el coeficiente
 startTime = datetime.datetime.now()
 gradoMax = 6
 mejorFitness = 0
-
-# time.sleep(1)
+poblacion = []
+poblacionMax = 200 # 52
 
 # Funcion principal
 def main():
-    coeficientes = generar_padre(0)
-    mejorFitness = obtener_fitness(coeficientes)
+    startTime = datetime.datetime.now()
+
+    # 1. Generar la poblacion inicial
+    poblacion = generarPoblacionInicial()
+
+    # Ordenar poblacion de mayor a menor fitness
+    poblacion.sort(key=fitnessCriteria,reverse=True)
+
+    # 2. Repetidamente:
+    #   2.1 Seleccionar padres para crossover
+    #   2.2 Generar decendencia
+    #   2.3 Mutar algunos padres
+    #   2.4 Mezclar la decendencia y los mutantes en la poblacion
+    #   2.5 Recortar la poblacion para mantener un tamano fijo
+
     while True:
-        time.sleep(0.2)
-        hijo = mutar(coeficientes)
-        fitnessHijo = obtener_fitness(hijo)
-        mostrar(hijo)
-        print("Fitness actual: {0}, Fitness mejor: {1}".format(fitnessHijo,mejorFitness))
-        print(hijo)
-        if mejorFitness >= fitnessHijo:
-            print("Continuando...\n")
-            continue
-        if fitnessHijo >= 0.96:
+        time.sleep(1)
+
+        # print("Poblacion inicial")
+        # imprimirPoblacion(poblacion)
+
+        # 2.1 seleccionar la mitad mejor (primera mitad como ya estan ordenados)
+        mejoresPadres = poblacion[:int( poblacionMax/2 )]
+        # print("Mejores padres")
+        # imprimirPoblacion(mejoresPadres)
+
+        # 2.2 generar decendencia con crossover
+        decendencia = []
+        for indicePadre in range(len(mejoresPadres)):
+            if indicePadre == len(mejoresPadres) - 1:
+                nuevoHijo = []
+                for indiceCoef in range(len(mejoresPadres[indicePadre])):
+                    nuevoHijo.append(getPromedio(mejoresPadres[indicePadre][indiceCoef], mejoresPadres[0][indiceCoef]))
+            else:
+                nuevoHijo = []
+                for indiceCoef in range(len(mejoresPadres[indicePadre])):
+                    nuevoHijo.append(getPromedio(mejoresPadres[indicePadre][indiceCoef], mejoresPadres[indicePadre + 1][indiceCoef]))
+            decendencia.append(nuevoHijo)
+
+        # print("Decendencia")
+        # imprimirPoblacion(decendencia)
+
+        # 2.3 mutar la mitad de los padres
+
+        # se obtiene los rangos max y min de cada coeficiente
+        mutantesRangos = []
+        for i in range(len(poblacion[0])):
+            mutantesRangos.append(getExtremos(poblacion,i))
+
+        # print("Extremos")        
+        # print(mutantesRangos)
+
+        mutantes = []
+        factor = 12 # 12
+        for k in range(int(poblacionMax/2)):
+            nuevoHijo = []
+            numAleatorio = random.randint(0, len(poblacion)-1)
+            for c in poblacion[numAleatorio]:
+                nuevoC = random.uniform(c - c*factor, c + c*factor)
+                nuevoHijo.append(nuevoC)
+            # for rango in mutantesRangos:
+                # mitad = getPromedio(rango[0], rango[1])
+                # # nuevoHijo.append(random.uniform(rango[0]*factor, rango[1]*factor))
+                # nuevoHijo.append(random.uniform(-mitad*factor, mitad*factor))
+            mutantes.append(nuevoHijo)
+        
+            
+        # print("mutantes")
+        # imprimirPoblacion(mutantes)
+
+        # 2.4 mezclar los mutantes y la decendencia
+        poblacion.extend(decendencia)
+        poblacion.extend(mutantes)
+
+        # print("Mezclados")
+        # imprimirPoblacion(poblacion)
+
+        # 2.5 recortar la poblacion
+        poblacion.sort(key=fitnessCriteria,reverse=True)
+        poblacion = poblacion[:poblacionMax]
+
+        # print("recortar")
+        # imprimirPoblacion(poblacion)
+
+        timeDiff = datetime.datetime.now() - startTime
+        print("------------------------")
+        print("Mejores 5")
+        imprimirPoblacion(poblacion[:5])
+        print("\n{0}\n".format(timeDiff))
+
+        # 2.6 determinar si ya llegamos al fitness objetivo
+        mejorFitness = obtener_fitness(poblacion[0])
+        if mejorFitness >= 0.97:
             break
-        mejorFitness = fitnessHijo
-        coeficientes = hijo
-        print()
-                                                    
+
 
 main()
