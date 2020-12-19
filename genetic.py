@@ -2,6 +2,7 @@ import random
 import datetime
 import time
 import sys
+import os
 
 # Representación del polinomio
 # [a,b,c,d,e,f,g] -> ax^6 + bx^5 + cx^4 + dx^3 + ex^2 + fx + g
@@ -106,23 +107,26 @@ def mostrar(coeficientes):
         if exp != 0:
             if coeficientes[i] != 0:
                 if coeficientes[i] > 0:
-                    polinomio += "+ {0} x^{1} ".format(coeficientes[i], exp)
+                    polinomio += "+ {0} x^{1} ".format(round(coeficientes[i],3), exp)
                 else: 
-                    polinomio += "{0} x^{1} ".format(coeficientes[i], exp)
+                    polinomio += "{0} x^{1} ".format(round(coeficientes[i],3), exp)
         else:
             if coeficientes[i] != 0:
                 if coeficientes[i] > 0:
-                    polinomio += "+ {0} ".format(coeficientes[i])
+                    polinomio += "+ {0} ".format(round(coeficientes[i],3))
                 else: 
-                    polinomio += "{0} ".format(coeficientes[i])
+                    polinomio += "{0} ".format(round(coeficientes[i],3))
         exp -= 1
 
-    print("{0}\t{1}\t{2}".format(polinomio, fitness, str(timeDiff)))
+    print("{0}\t \nFitness: {1}\t{2}".format(polinomio, fitness, str(timeDiff)))
 
-def generarPoblacionInicial():
+def generarPoblacionInicial(grado):
     p = []
+    gradoAux = 0
     for i in range(poblacionMax):
-        p.append(generar_padre(gradoMax))
+        # gradoAleatorio = random.randint(0, gradoMax)
+        p.append(generar_padre(gradoAux))
+        gradoAux = (gradoAux + 1) % 7
     return p
 
 def fitnessCriteria(e):
@@ -159,10 +163,11 @@ poblacionMax = 200 # 52
 
 # Funcion principal
 def main():
+    generacion = 1
     startTime = datetime.datetime.now()
 
     # 1. Generar la poblacion inicial
-    poblacion = generarPoblacionInicial()
+    poblacion = generarPoblacionInicial(1)
 
     # Ordenar poblacion de mayor a menor fitness
     poblacion.sort(key=fitnessCriteria,reverse=True)
@@ -247,11 +252,17 @@ def main():
         print("------------------------")
         print("Mejores 5")
         imprimirPoblacion(poblacion[:5])
+        # imprimirPoblacion(poblacion)
         print("\n{0}\n".format(timeDiff))
+        print("Generacion: {0}".format(generacion))
+        generacion += 1
 
         # 2.6 determinar si ya llegamos al fitness objetivo
         mejorFitness = obtener_fitness(poblacion[0])
         if mejorFitness >= 0.97:
+            print("-----------------------------------------------------")
+            mostrar(poblacion[1])
+            print("-----------------------------------------------------")
             break
 
 
