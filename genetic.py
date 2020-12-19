@@ -3,6 +3,7 @@ import datetime
 import time
 import sys
 import os
+from matplotlib import pyplot as plt
 
 # Representación del polinomio
 # [a,b,c,d,e,f,g] -> ax^6 + bx^5 + cx^4 + dx^3 + ex^2 + fx + g
@@ -151,7 +152,22 @@ def getExtremos(datos, indice):
             mayor = dato[indice]
     return (menor, mayor)
 
+def plotData(originalXY, mejoresCoeficientes):
+    calculatedY = evaluarPolinomio(mejoresCoeficientes)
+    xData = []
+    yData = []
+    for par in originalXY:
+        xData.append(par[0])
+        yData.append(par[1])
+    plt.clf()
+    plt.plot(xData, yData)
+    plt.plot(xData, calculatedY, 'r')
+    plt.pause(0.1)
+    # plt.show()
+
+
 # Datos iniciales
+plt.ion()
 random.seed()
 targetData = leerArchivo()                  # Datos XY dados por el profe
 promedioY = obtenerPromedioY(targetData)    # promedio para sacar el coeficiente de determinación
@@ -259,10 +275,12 @@ def main():
 
         # 2.6 determinar si ya llegamos al fitness objetivo
         mejorFitness = obtener_fitness(poblacion[0])
+        plotData(targetData, poblacion[0])
         if mejorFitness >= 0.97:
             print("-----------------------------------------------------")
             mostrar(poblacion[1])
             print("-----------------------------------------------------")
+            input("Presione una tecla para continuar...")
             break
 
 
