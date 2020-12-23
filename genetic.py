@@ -9,11 +9,11 @@ from matplotlib import pyplot as plt
 # [a,b,c,d,e,f,g] -> ax^6 + bx^5 + cx^4 + dx^3 + ex^2 + fx + g
 
 # Funcion generadora de coeficientes aleatorios
-def generar_padre(grado):
+def generar_padre(grado, minVal, maxVal):
     nuevoPadre = [0,0,0,0,0,0,0]
     indice = len(nuevoPadre) - 1
     for i in range(gradoMax + 1):
-        num = random.randint(-10,10)
+        num = random.randint(minVal,maxVal)
         nuevoPadre[indice] = num
         if i == grado:
             break
@@ -126,7 +126,7 @@ def generarPoblacionInicial(grado):
     gradoAux = 0
     for i in range(poblacionMax):
         # gradoAleatorio = random.randint(0, gradoMax)
-        p.append(generar_padre(gradoAux))
+        p.append(generar_padre(gradoAux, minRangeVal, maxRangeVal))
         gradoAux = (gradoAux + 1) % 7
     return p
 
@@ -165,6 +165,24 @@ def plotData(originalXY, mejoresCoeficientes):
     plt.pause(0.1)
     # plt.show()
 
+def obtenerGrado(datos):
+    mejorActual = datos[0]
+    gradoActual = 0
+    indice = -1
+    while gradoActual < len(mejorActual):
+        if(mejorActual[indice] == 0):
+            return (gradoActual, indice)
+        indice -= 1
+        gradoActual += 1
+    return  (gradoActual - 1, 0)
+
+def revisarSiAumentarGrado(datos):
+    mejorActual = round(obtener_fitness(datos[0]), 2)
+    peorActual = round(obtener_fitness(datos[len(datos) - 1]), 2)
+    if mejorActual == peorActual:
+        return True
+    return False
+
 
 # Datos iniciales
 plt.ion()
@@ -176,6 +194,8 @@ gradoMax = 6
 mejorFitness = 0
 poblacion = []
 poblacionMax = 200 # 52
+minRangeVal = -100
+maxRangeVal = 100
 
 # Funcion principal
 def main():
@@ -196,28 +216,36 @@ def main():
     #   2.5 Recortar la poblacion para mantener un tamano fijo
 
     while True:
-        time.sleep(1)
+        
 
         # print("Poblacion inicial")
         # imprimirPoblacion(poblacion)
 
         # 2.1 seleccionar la mitad mejor (primera mitad como ya estan ordenados)
-        mejoresPadres = poblacion[:int( poblacionMax/2 )]
+        mejoresPadres = poblacion
         # print("Mejores padres")
         # imprimirPoblacion(mejoresPadres)
 
         # 2.2 generar decendencia con crossover
         decendencia = []
-        for indicePadre in range(len(mejoresPadres)):
+        for indicePadre in range(int(len(mejoresPadres)/2)):
+            nuevoHijo = []
+            nuevoHijo2 = []
             if indicePadre == len(mejoresPadres) - 1:
-                nuevoHijo = []
                 for indiceCoef in range(len(mejoresPadres[indicePadre])):
                     nuevoHijo.append(getPromedio(mejoresPadres[indicePadre][indiceCoef], mejoresPadres[0][indiceCoef]))
             else:
-                nuevoHijo = []
+                num = random.randint(indicePadre+1,len(mejoresPadres)-1)
+                num2 = random.randint(1,5)
+                nuevoHijo2.extend(mejoresPadres[indicePadre][:num2])
+                nuevoHijo2.extend(mejoresPadres[num][num2:])
                 for indiceCoef in range(len(mejoresPadres[indicePadre])):
-                    nuevoHijo.append(getPromedio(mejoresPadres[indicePadre][indiceCoef], mejoresPadres[indicePadre + 1][indiceCoef]))
+                    nuevoHijo.append(getPromedio(mejoresPadres[indicePadre][indiceCoef], mejoresPadres[num][indiceCoef]))
             decendencia.append(nuevoHijo)
+            decendencia.append(nuevoHijo2)
+
+        for i in range(50):
+            decendencia.append(generar_padre(6, minRangeVal, maxRangeVal))
 
         # print("Decendencia")
         # imprimirPoblacion(decendencia)
@@ -234,11 +262,12 @@ def main():
 
         mutantes = []
         factor = 12 # 12
-        for k in range(int(poblacionMax/2)):
+        for k in range(int(len(mejoresPadres)/2)):
             nuevoHijo = []
-            numAleatorio = random.randint(0, len(poblacion)-1)
-            for c in poblacion[numAleatorio]:
-                nuevoC = random.uniform(c - c*factor, c + c*factor)
+            numAleatorio = random.randint(0, len(decendencia)-1)
+            for c in decendencia[numAleatorio]:
+                c = abs(c *factor)+50
+                nuevoC = random.uniform(-c, c)
                 nuevoHijo.append(nuevoC)
             # for rango in mutantesRangos:
                 # mitad = getPromedio(rango[0], rango[1])
@@ -272,6 +301,27 @@ def main():
         print("\n{0}\n".format(timeDiff))
         print("Generacion: {0}".format(generacion))
         generacion += 1
+
+        # 2.6 revisar si aumento grado
+        # if revisarSiAumentarGrado(poblacion):
+        #     # ingresar 25 de un grado mayor a poblacion
+        #     (gradoActual, indiceActual) = obtenerGrado(poblacion)
+        #     factorScale = 2
+        #     if gradoActual <= gradoMax:
+        #         print("------Aumentando Grado------")
+        #         print("Mejor: {0}".format(poblacion[0]))
+        #         if indiceActual <= -2:
+        #             rangeVal = poblacion[0][indiceActual + 1]
+        #         else:
+        #             rangeVal = poblacion[0][indiceActual]
+
+        #         for i in range(25):
+        #             nuevoValor = random.uniform(-rangeVal * factorScale, rangeVal * factorScale)
+        #             nuevoCoef = poblacion[0][:]
+        #             nuevoCoef[indiceActual] = nuevoValor
+        #             print("Nuevo: {0}, Val: {1}".format(nuevoCoef, rangeVal))
+        #             poblacion.append(nuevoCoef)
+
 
         # 2.6 determinar si ya llegamos al fitness objetivo
         mejorFitness = obtener_fitness(poblacion[0])
