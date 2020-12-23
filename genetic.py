@@ -9,11 +9,11 @@ from matplotlib import pyplot as plt
 # [a,b,c,d,e,f,g] -> ax^6 + bx^5 + cx^4 + dx^3 + ex^2 + fx + g
 
 # Funcion generadora de coeficientes aleatorios
-def generar_padre(grado):
+def generar_padre(grado, minVal, maxVal):
     nuevoPadre = [0,0,0,0,0,0,0]
     indice = len(nuevoPadre) - 1
     for i in range(gradoMax + 1):
-        num = random.randint(-10,10)
+        num = random.randint(minVal,maxVal)
         nuevoPadre[indice] = num
         if i == grado:
             break
@@ -126,7 +126,7 @@ def generarPoblacionInicial(grado):
     gradoAux = 0
     for i in range(poblacionMax):
         # gradoAleatorio = random.randint(0, gradoMax)
-        p.append(generar_padre(gradoAux))
+        p.append(generar_padre(gradoAux, minRangeVal, maxRangeVal))
         gradoAux = (gradoAux + 1) % 7
     return p
 
@@ -165,6 +165,24 @@ def plotData(originalXY, mejoresCoeficientes):
     plt.pause(0.1)
     # plt.show()
 
+def obtenerGrado(datos):
+    mejorActual = datos[0]
+    gradoActual = 0
+    indice = -1
+    while gradoActual < len(mejorActual):
+        if(mejorActual[indice] == 0):
+            return (gradoActual, indice)
+        indice -= 1
+        gradoActual += 1
+    return  (gradoActual - 1, 0)
+
+def revisarSiAumentarGrado(datos):
+    mejorActual = round(obtener_fitness(datos[0]), 2)
+    peorActual = round(obtener_fitness(datos[len(datos) - 1]), 2)
+    if mejorActual == peorActual:
+        return True
+    return False
+
 
 # Datos iniciales
 plt.ion()
@@ -176,6 +194,8 @@ gradoMax = 6
 mejorFitness = 0
 poblacion = []
 poblacionMax = 200 # 52
+minRangeVal = -100
+maxRangeVal = 100
 
 # Funcion principal
 def main():
@@ -272,6 +292,27 @@ def main():
         print("\n{0}\n".format(timeDiff))
         print("Generacion: {0}".format(generacion))
         generacion += 1
+
+        # 2.6 revisar si aumento grado
+        # if revisarSiAumentarGrado(poblacion):
+        #     # ingresar 25 de un grado mayor a poblacion
+        #     (gradoActual, indiceActual) = obtenerGrado(poblacion)
+        #     factorScale = 2
+        #     if gradoActual <= gradoMax:
+        #         print("------Aumentando Grado------")
+        #         print("Mejor: {0}".format(poblacion[0]))
+        #         if indiceActual <= -2:
+        #             rangeVal = poblacion[0][indiceActual + 1]
+        #         else:
+        #             rangeVal = poblacion[0][indiceActual]
+
+        #         for i in range(25):
+        #             nuevoValor = random.uniform(-rangeVal * factorScale, rangeVal * factorScale)
+        #             nuevoCoef = poblacion[0][:]
+        #             nuevoCoef[indiceActual] = nuevoValor
+        #             print("Nuevo: {0}, Val: {1}".format(nuevoCoef, rangeVal))
+        #             poblacion.append(nuevoCoef)
+
 
         # 2.6 determinar si ya llegamos al fitness objetivo
         mejorFitness = obtener_fitness(poblacion[0])
