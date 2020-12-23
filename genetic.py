@@ -97,6 +97,11 @@ def obtener_fitness(coeficientes):
         # return 1
     return res
 
+def terminoTiempo():
+    timeDiff = datetime.datetime.now() - startTime
+    minutes = timeDiff.total_seconds()//60
+    return minutes >= 5
+
 # Funcion para mostrar los coeficientes para monitorizar
 def mostrar(coeficientes):
     timeDiff = datetime.datetime.now() - startTime
@@ -194,8 +199,8 @@ gradoMax = 6
 mejorFitness = 0
 poblacion = []
 poblacionMax = 200 # 52
-minRangeVal = -100
-maxRangeVal = 100
+minRangeVal = -1000
+maxRangeVal = 1000
 
 # Funcion principal
 def main():
@@ -204,9 +209,9 @@ def main():
 
     # 1. Generar la poblacion inicial
     poblacion = generarPoblacionInicial(1)
-
+    mejor = [poblacion[0]]
+    mejorFitnessActual = 0
     # Ordenar poblacion de mayor a menor fitness
-    poblacion.sort(key=fitnessCriteria,reverse=True)
 
     # 2. Repetidamente:
     #   2.1 Seleccionar padres para crossover
@@ -214,7 +219,8 @@ def main():
     #   2.3 Mutar algunos padres
     #   2.4 Mezclar la decendencia y los mutantes en la poblacion
     #   2.5 Recortar la poblacion para mantener un tamano fijo
-
+    count = 0
+    anterior = 0
     while True:
         
 
@@ -222,12 +228,15 @@ def main():
         # imprimirPoblacion(poblacion)
 
         # 2.1 seleccionar la mitad mejor (primera mitad como ya estan ordenados)
-        mejoresPadres = poblacion
         # print("Mejores padres")
         # imprimirPoblacion(mejoresPadres)
 
         # 2.2 generar decendencia con crossover
         decendencia = []
+        for i in range(100):
+            poblacion.append(generar_padre(6, minRangeVal, maxRangeVal))
+        poblacion.sort(key=fitnessCriteria,reverse=True)
+        mejoresPadres = poblacion
         for indicePadre in range(int(len(mejoresPadres)/2)):
             nuevoHijo = []
             nuevoHijo2 = []
@@ -244,18 +253,10 @@ def main():
             decendencia.append(nuevoHijo)
             decendencia.append(nuevoHijo2)
 
-        for i in range(50):
-            decendencia.append(generar_padre(6, minRangeVal, maxRangeVal))
-
         # print("Decendencia")
         # imprimirPoblacion(decendencia)
 
         # 2.3 mutar la mitad de los padres
-
-        # se obtiene los rangos max y min de cada coeficiente
-        mutantesRangos = []
-        for i in range(len(poblacion[0])):
-            mutantesRangos.append(getExtremos(poblacion,i))
 
         # print("Extremos")        
         # print(mutantesRangos)
@@ -266,7 +267,7 @@ def main():
             nuevoHijo = []
             numAleatorio = random.randint(0, len(decendencia)-1)
             for c in decendencia[numAleatorio]:
-                c = abs(c *factor)+50
+                c = abs(c *factor)+100
                 nuevoC = random.uniform(-c, c)
                 nuevoHijo.append(nuevoC)
             # for rango in mutantesRangos:
@@ -296,42 +297,45 @@ def main():
         timeDiff = datetime.datetime.now() - startTime
         print("------------------------")
         print("Mejores 5")
-        imprimirPoblacion(poblacion[:5])
-        # imprimirPoblacion(poblacion)
-        print("\n{0}\n".format(timeDiff))
-        print("Generacion: {0}".format(generacion))
-        generacion += 1
-
-        # 2.6 revisar si aumento grado
-        # if revisarSiAumentarGrado(poblacion):
-        #     # ingresar 25 de un grado mayor a poblacion
-        #     (gradoActual, indiceActual) = obtenerGrado(poblacion)
-        #     factorScale = 2
-        #     if gradoActual <= gradoMax:
-        #         print("------Aumentando Grado------")
-        #         print("Mejor: {0}".format(poblacion[0]))
-        #         if indiceActual <= -2:
-        #             rangeVal = poblacion[0][indiceActual + 1]
-        #         else:
-        #             rangeVal = poblacion[0][indiceActual]
-
-        #         for i in range(25):
-        #             nuevoValor = random.uniform(-rangeVal * factorScale, rangeVal * factorScale)
-        #             nuevoCoef = poblacion[0][:]
-        #             nuevoCoef[indiceActual] = nuevoValor
-        #             print("Nuevo: {0}, Val: {1}".format(nuevoCoef, rangeVal))
-        #             poblacion.append(nuevoCoef)
+        
 
 
         # 2.6 determinar si ya llegamos al fitness objetivo
         mejorFitness = obtener_fitness(poblacion[0])
-        plotData(targetData, poblacion[0])
-        if mejorFitness >= 0.97:
+        if(mejorFitness > mejorFitnessActual):
+            mejorFitnessActual = mejorFitness
+            mejor[0] = poblacion[0][:]
+            imprimirPoblacion(poblacion[:5])
+            plotData(targetData, poblacion[0])
+        else:
+            lista = mejor[:]
+            lista.extend(poblacion[:4])
+            imprimirPoblacion(lista)
+            plotData(targetData, mejor[0])
+
+        print("\n{0}\n".format(timeDiff))
+        print("Generacion: {0}".format(generacion))
+        generacion += 1
+        if mejorFitness >= 0.98:
             print("-----------------------------------------------------")
-            mostrar(poblacion[1])
+            mostrar(poblacion[0])
+            print("-----------------------------------------------------")
+            input("Presione una tecla para continuar...")
+            break
+        elif(terminoTiempo()):
+            print("-----------------------------------------------------")
+            mostrar(mejor[0])
             print("-----------------------------------------------------")
             input("Presione una tecla para continuar...")
             break
 
+        if(abs(mejorFitness-anterior) < 0.001):
+            count +=1
+            if(count == 20):
+                count = 0
+                poblacion = poblacion[185:]
+        else:
+            count = 0
+            anterior = mejorFitness
 
 main()
