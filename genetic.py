@@ -211,6 +211,7 @@ def main():
 
     # 1. Generar la poblacion inicial
     poblacion = generarPoblacionInicial(1)
+    poblacion.sort(key=fitnessCriteria,reverse=True)
     mejor = [poblacion[0]]
     mejorFitnessActual = 0
     # Ordenar poblacion de mayor a menor fitness
@@ -223,6 +224,7 @@ def main():
     #   2.5 Recortar la poblacion para mantener un tamano fijo
     count = 0
     anterior = 0
+    plotData(targetData, poblacion[0])
     while True:
         # time.sleep(0.3)
         
@@ -305,33 +307,21 @@ def main():
             mejorFitnessActual = mejorFitness
             mejor[0] = poblacion[0][:]
             plotData(targetData, poblacion[0])
-            imprimirPoblacion(poblacion[:5])
-        else:
-            lista = mejor[:]
-            lista.extend(poblacion[:4])
-            plotData(targetData, mejor[0])
-            imprimirPoblacion(lista)
+        imprimirPoblacion(poblacion[:5])
 
         print("\n{0}".format(timeDiff))
         print("Generacion: {0}\n".format(generacion))
 
         generacion += 1
-        if mejorFitness >= 0.98:
+        if mejorFitness >= 0.98 or terminoTiempo():
             print("-----------------------------------------------------")
             mostrar(poblacion[0])
             print("-----------------------------------------------------")
             input("Presione una tecla para continuar...")
-            break
-        elif(terminoTiempo()):
-            print("-----------------------------------------------------")
-            mostrar(mejor[0])
-            print("-----------------------------------------------------")
-            input("Presione una tecla para continuar...")
-            break
 
         if(abs(mejorFitness-anterior) < 0.001):
             count +=1
-            if(count == 20):
+            if(count == 35):
                 count = 0
                 poblacion = poblacion[185:]
         else:
