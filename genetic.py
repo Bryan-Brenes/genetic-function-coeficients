@@ -318,6 +318,7 @@ def main():
             mostrar(poblacion[0])
             print("-----------------------------------------------------")
             input("Presione una tecla para continuar...")
+            break
 
         if(abs(mejorFitness-anterior) < 0.001):
             count +=1
