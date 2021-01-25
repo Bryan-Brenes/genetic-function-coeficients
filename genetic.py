@@ -140,6 +140,8 @@ def fitnessCriteria(e):
 
 def imprimirPoblacion(datos):
     print("------------------------")
+    print("Mejores 5")
+    print("------------------------")
     for p in datos:
         print("{0}\t\t fitness: {1}".format(p, obtener_fitness(p)))
     print("------------------------")
@@ -222,6 +224,7 @@ def main():
     count = 0
     anterior = 0
     while True:
+        # time.sleep(0.3)
         
 
         # print("Poblacion inicial")
@@ -295,26 +298,23 @@ def main():
         # imprimirPoblacion(poblacion)
 
         timeDiff = datetime.datetime.now() - startTime
-        print("------------------------")
-        print("Mejores 5")
-        
-
 
         # 2.6 determinar si ya llegamos al fitness objetivo
         mejorFitness = obtener_fitness(poblacion[0])
         if(mejorFitness > mejorFitnessActual):
             mejorFitnessActual = mejorFitness
             mejor[0] = poblacion[0][:]
-            imprimirPoblacion(poblacion[:5])
             plotData(targetData, poblacion[0])
+            imprimirPoblacion(poblacion[:5])
         else:
             lista = mejor[:]
             lista.extend(poblacion[:4])
-            imprimirPoblacion(lista)
             plotData(targetData, mejor[0])
+            imprimirPoblacion(lista)
 
-        print("\n{0}\n".format(timeDiff))
-        print("Generacion: {0}".format(generacion))
+        print("\n{0}".format(timeDiff))
+        print("Generacion: {0}\n".format(generacion))
+
         generacion += 1
         if mejorFitness >= 0.98:
             print("-----------------------------------------------------")
